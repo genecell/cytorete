@@ -43,22 +43,21 @@ jobs:
           python -m pip install -e ".[dev]"
 
       # Skips are the right behaviour for a contributor and the wrong
-      # behaviour for a release: cytorete's promoter-cistrome tests skip
-      # without py2bit and its enrichment tests without gseapy, so a broken
-      # extra would quietly shrink the release run instead of failing it.
+      # behaviour for a release: cytorete's sequence tests skip without
+      # py2bit, so a broken extra would quietly shrink the release run
+      # instead of failing it.
       - name: Optional dependencies must be installed for the release run
         run: |
           python - <<'PY'
           import importlib
-          for mod, extra in (("py2bit", "motif"), ("gseapy", "egrn")):
-              try:
-                  importlib.import_module(mod)
-              except ImportError as exc:
-                  raise SystemExit(
-                      f"::error::{mod} is not importable, so its tests would "
-                      f"SKIP rather than run. Check the '{extra}' extra in "
-                      f"pyproject.toml. ({exc})")
-          print("py2bit and gseapy present — the full suite will run")
+          try:
+              importlib.import_module("py2bit")
+          except ImportError as exc:
+              raise SystemExit(
+                  "::error::py2bit is not importable, so the sequence tests "
+                  "would SKIP rather than run. Check the 'motif' extra in "
+                  f"pyproject.toml. ({exc})")
+          print("py2bit present — the sequence tests will run")
           PY
 
       # Without a JASPAR MEME file the motif-loading tests skip -- 14 of 57,

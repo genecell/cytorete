@@ -1,35 +1,26 @@
-# Cytorete
+# cytorete
 
 **Cell-type-resolved inference of gene regulatory networks and their dynamics.**
 
 ## The name
 
-**Cytorete** — *cyto-* + *rete* — is "the cell's network".
+**cytorete** = *cyto-* + *rete*, "the cell's network" — Ancient Greek
+**κύτος** (*kýtos*), the combining form for **cell**, and Latin **rēte**,
+"**net**", the word anatomy already uses in *rete mirabile* and *rete testis*.
 
-| Part | Origin | Meaning |
-|---|---|---|
-| *cyto-* | Ancient Greek **κύτος** (*kýtos*), "hollow vessel, container" | the standard biological combining form for **cell** |
-| *rete* | Latin **rēte** (genitive *rētis*, plural *retia*), "**net**" | already at home in anatomy — *rete mirabile*, *rete testis*, *rete* ridges |
-
-Pronounced **sy-toh-REE-tee** (/ˌsaɪtoʊˈriːtiː/), stress on the third
-syllable — *rete* keeps the two-syllable English anatomical pronunciation
-(REE-tee), as in *rete mirabile*, not a one-syllable "reet". In classical
-Latin the word is /ˈreː.te/, RAY-teh; either is understood.
-
-The net is the point: a regulatory network is not a property of a tissue but
-of a **cell type**, and Cytorete infers one per cell type rather than one
-averaged over all of them.
+Pronounced **sy-toh-REE-tee** (/ˌsaɪtoʊˈriːtiː/) — *rete* keeps its
+two-syllable English anatomical sound, not a one-syllable "reet".
 
 ## What this package does
 
-Cytorete infers cell-type-resolved gene regulatory networks (GRNs) from
+cytorete infers cell-type-resolved gene regulatory networks (GRNs) from
 single-cell data, combining COSG-derived co-specificity, marker-gene
 dimensionality reduction (GDR), and motif-cistrome evidence into TF→gene
 regulons with per-cell-type activity.
 
 It is built on the **PIASO** single-cell stack (a one-directional dependency,
 `cytorete → piaso-tools`): it reuses PIASO's public API for scoring, GDR,
-co-specificity, motif scanning (Rust-accelerated), and the Cytome streaming
+co-specificity, motif scanning (Rust-accelerated), and the cytome streaming
 backend, so it scales from small AnnData objects to atlas-scale on-disk
 cytomes.
 
@@ -47,9 +38,18 @@ import — so `import cytorete` behaves the same either way.
 
 ```bash
 pip install cytorete          # pulls piaso-tools, cosg, cytome
-pip install "cytorete[motif]" # + py2bit for de-novo .2bit sequence scanning
-pip install "cytorete[egrn]"  # + gseapy for enhancer-GRN readouts
+pip install "cytorete[motif]" # + py2bit for .2bit genome sequence extraction
 ```
+
+## Documentation
+
+Tutorials live with the rest of the stack on **[piaso.org](https://piaso.org)**:
+
+- [RNA regulon inference](https://piaso.org/tutorials/cytorete-regulons/) — the end-to-end workflow
+- [Motif analysis](https://piaso.org/tutorials/motif-analysis/) — scanning and motif databases
+
+cytorete shares PIASO's scoring, GDR and co-specificity, so its tutorials sit
+beside theirs rather than on a site of their own.
 
 ## Quickstart
 
@@ -90,18 +90,18 @@ fully available.
 ## Relationship to PIASO
 
 The dependency runs one way — `cytorete → piaso-tools` — and never back.
-Cytorete is deliberately *not* a dependency of PIASO, which would be a
+cytorete is deliberately *not* a dependency of PIASO, which would be a
 packaging cycle.
 
 | Concern | Lives in |
 |---|---|
-| Regulons, promoter cistrome, regulon activity & specificity, regulon plots | **Cytorete** (this package) |
+| Regulons, promoter cistrome, regulon activity & specificity, regulon plots | **cytorete** (this package) |
 | Scoring, INFOG normalization, GDR, co-specificity, motif scanning (`pp.scan_motifs`), motif/genome loaders | PIASO (`piaso-tools`) |
 | Streaming on-disk backend | Cytome |
 | Marker specificity scoring | COSG |
 
 The GRN entry points that used to live in `piaso.tl` remain there as thin
-forwarders: each resolves Cytorete at call time and, if it is not installed,
+forwarders: each resolves cytorete at call time and, if it is not installed,
 raises an `ImportError` pointing at `pip install cytorete`. They exist for
 existing notebooks — new code should `import cytorete` directly.
 

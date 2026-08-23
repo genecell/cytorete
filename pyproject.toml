@@ -56,10 +56,8 @@ dependencies = [
 [project.optional-dependencies]
 # Genome .2bit sequence extraction for de-novo cistrome scanning.
 motif = ["py2bit"]
-# Enhancer-GRN / gene-set enrichment readouts.
-egrn = ["gseapy"]
 # Test / dev tooling.
-dev = ["pytest>=7", "py2bit", "gseapy"]
+dev = ["pytest>=7", "py2bit"]
 
 [project.urls]
 Homepage = "https://github.com/genecell/cytorete"

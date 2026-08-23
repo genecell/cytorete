@@ -1,0 +1,184 @@
+name: publish-pypi
+# Publish cytorete to PyPI on a GitHub Release, via PyPI Trusted Publishing
+# (OIDC — no API token needed). Same shape as the cytome and COSG workflows,
+# plus one gate the others do not need: see "Held modules" below.
+#
+# ONE-TIME SETUP on pypi.org → Publishing:
+#   owner        genecell
+#   repository   cytorete
+#   workflow     publish.yml
+#   environment  (leave blank)
+# cytorete does not exist on PyPI yet, so add it as a **pending publisher**.
+# That lets the very first upload come from this workflow and no API token is
+# ever created. (Claiming the name by hand with `twine upload` also works —
+# then add the Trusted Publisher and this takes over from the second release.)
+#
+# ORDER: cytorete depends on `piaso-tools>=1.2.2`, so PIASO 1.2.2 must be on
+# PyPI before this runs, or the install step cannot resolve.
+
+on:
+  release:
+    # `published` and not `created`: GitHub does not fire `created` for draft
+    # releases, and composing a release in the web UI saves a draft first — a
+    # `created` trigger silently never fires on the normal path.
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write        # OIDC identity for Trusted Publishing
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+
+      # A PyPI version can never be re-uploaded, so everything that can fail
+      # should fail before the upload step, not after it.
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      # Skips are the right behaviour for a contributor and the wrong
+      # behaviour for a release: cytorete's promoter-cistrome tests skip
+      # without py2bit and its enrichment tests without gseapy, so a broken
+      # extra would quietly shrink the release run instead of failing it.
+      - name: Optional dependencies must be installed for the release run
+        run: |
+          python - <<'PY'
+          import importlib
+          for mod, extra in (("py2bit", "motif"), ("gseapy", "egrn")):
+              try:
+                  importlib.import_module(mod)
+              except ImportError as exc:
+                  raise SystemExit(
+                      f"::error::{mod} is not importable, so its tests would "
+                      f"SKIP rather than run. Check the '{extra}' extra in "
+                      f"pyproject.toml. ({exc})")
+          print("py2bit and gseapy present — the full suite will run")
+          PY
+
+      # Without a JASPAR MEME file the motif-loading tests skip -- 14 of 57,
+      # a quarter of the suite, silently absent from a green release run. The
+      # file is ~0.5 MB and piaso ships the fetcher, so the release run gets
+      # real coverage. A JASPAR outage warns rather than blocking a release:
+      # the tests then skip exactly as they do for a contributor.
+      - name: Fetch JASPAR motifs so the motif tests run
+        run: |
+          python - <<'PY' >> "$GITHUB_ENV" || echo "::warning::JASPAR fetch failed; motif tests will SKIP this run"
+          import piaso.data
+          print(f"CYTORETE_TEST_JASPAR_MEME={piaso.data.fetch_jaspar()}")
+          PY
+
+      - name: Run tests
+        run: |
+          python -m pytest tests/ -q
+          if [ -z "${CYTORETE_TEST_JASPAR_MEME:-}" ]; then
+            echo "::warning::ran without JASPAR; the motif tests were skipped"
+          fi
+
+      # Held modules. The public tree is ASSEMBLED (publish.sh) rather than
+      # stripped, so these files are simply absent from this repository and
+      # their public names are call-time ImportError shims in _held.py. This
+      # step asserts that is still true of the artifact about to be uploaded:
+      # a bad rsync onto the clone, or a merge from the development repo,
+      # would otherwise publish them — and a PyPI upload cannot be withdrawn.
+      - name: Held modules must not be in the tree
+        run: |
+          python - <<'PY'
+          import pathlib, sys
+          held = ["cytorete/tools/_inferGRN.py",
+                  "cytorete/tools/_inferTFActivity.py",
+                  "cytorete/tools/_consensus.py",
+                  "cytorete/preprocessing/_peak_cistrome.py"]
+          found = [h for h in held if pathlib.Path(h).exists()]
+          if found:
+              print("::error::held modules present in the tree: "
+                    + ", ".join(found)
+                    + " — this repository must contain only the assembled "
+                      "public tree (publish.sh)")
+              sys.exit(1)
+          shim = pathlib.Path("cytorete/_held.py")
+          if not shim.exists():
+              print("::error::cytorete/_held.py is missing, so the public "
+                    "names would be absent rather than raising")
+              sys.exit(1)
+          print("held modules absent, shims present")
+          PY
+
+      # File-absence is necessary but not sufficient: a refactor could
+      # reconnect a real implementation under a held name and the check above
+      # would still pass. This asserts the observable behaviour a user gets.
+      - name: Held names must raise, not work
+        run: |
+          python - <<'PY'
+          import cytorete
+          for name in ("inferGRN", "inferGRN_consensus", "inferTFActivity"):
+              try:
+                  getattr(cytorete, name)()
+              except ImportError as e:
+                  assert "not part of this distribution" in str(e), (name, e)
+              else:
+                  raise SystemExit(
+                      f"::error::cytorete.{name} executed in the public "
+                      f"package; it must raise ImportError")
+          print("held names raise as expected")
+          PY
+
+      - name: Build sdist + wheel
+        run: |
+          python -m pip install build twine
+          python -m build
+
+      # Belt and braces: the check above reads the checkout, this one reads
+      # the actual artifact. A packaging change (hatch include/exclude, a
+      # stray build backend setting) could reintroduce a file that is not in
+      # the working tree check's blind spot.
+      - name: Held modules must not be in the built artifacts
+        run: |
+          python - <<'PY'
+          import glob, sys, tarfile, zipfile
+          bad = ("_inferGRN.py", "_inferTFActivity.py", "_consensus.py",
+                 "_peak_cistrome.py")
+          def offenders(names):
+              return [n for n in names if n.split("/")[-1] in bad]
+          problems = []
+          for whl in glob.glob("dist/*.whl"):
+              problems += [f"{whl}:{n}" for n in
+                           offenders(zipfile.ZipFile(whl).namelist())]
+          for sd in glob.glob("dist/*.tar.gz"):
+              with tarfile.open(sd) as t:
+                  problems += [f"{sd}:{n}" for n in offenders(t.getnames())]
+          if problems:
+              print("::error::held modules found in the built artifacts: "
+                    + ", ".join(problems))
+              sys.exit(1)
+          print("artifacts clean")
+          PY
+
+      - name: Check metadata renders on PyPI
+        run: python -m twine check dist/*
+
+      - name: Tag must match the package version
+        if: github.event_name == 'release'
+        run: |
+          BUILT=$(ls dist/*.tar.gz | sed -E 's/.*-([0-9][^-]*)\.tar\.gz/\1/')
+          TAG=${GITHUB_REF_NAME#v}
+          echo "tag=$TAG built=$BUILT"
+          if [ "$TAG" != "$BUILT" ]; then
+            echo "::error::Release tag '$GITHUB_REF_NAME' does not match the" \
+                 "built version '$BUILT'. Fix the tag or pyproject.toml —" \
+                 "an upload under the wrong version cannot be undone."
+            exit 1
+          fi
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # Re-running a release whose version is already on PyPI is a no-op
+          # rather than a red build. A forgotten version bump is still caught
+          # by the tag-vs-version guard above.
+          skip-existing: true

@@ -1,0 +1,75 @@
+[build-system]
+requires = ["hatchling>=1.18"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cytorete"
+dynamic = ["version"]     # single source: cytorete/__init__.py
+description = "Cytorete — cell-type-resolved inference of gene regulatory networks and their dynamics."
+requires-python = ">=3.9"
+license = { text = "BSD-3-Clause" }
+authors = [
+    { name = "Min Dai", email = "dai@broadinstitute.org" }
+]
+maintainers = [
+    { name = "Min Dai", email = "dai@broadinstitute.org" }
+]
+readme = "README.md"
+keywords = [
+    "single-cell", "GRN", "gene regulatory network", "regulon", "ATAC",
+    "multiome", "cistrome", "transcription factor", "scATAC-seq", "scRNA-seq",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Framework :: Jupyter",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+
+# Cytorete is a method built on the PIASO stack (one-directional dependency:
+# cytorete -> piaso-tools, like laris -> cosg; no cycle). It reuses PIASO's
+# public API — runGDR, cospecificity_*, score/infog, selectPeaks,
+# pp.scan_motifs (Rust-accelerated), and the genome/motif loaders — plus the
+# Cytome streaming backend and COSG.
+dependencies = [
+    "piaso-tools>=1.2.2",
+    "cosg>=1.1.2",
+    "cytome>=0.2.5,<1.0",
+    "numpy>=1.21.6",
+    "scipy>=1.7",
+    "pandas>=1.3",
+    "anndata>=0.8",
+    # PIASO >= 1.2.1 imports cleanly on every matplotlib (the module-level
+    # cm.get_cmap calls are gone), so no upper bound.
+    "matplotlib>=3.5.2",
+]
+
+[project.optional-dependencies]
+# Genome .2bit sequence extraction for de-novo cistrome scanning.
+motif = ["py2bit"]
+# Enhancer-GRN / gene-set enrichment readouts.
+egrn = ["gseapy"]
+# Test / dev tooling.
+dev = ["pytest>=7", "py2bit", "gseapy"]
+
+[project.urls]
+Homepage = "https://github.com/genecell/cytorete"
+Repository = "https://github.com/genecell/cytorete"
+
+[tool.hatch.version]
+# One literal, in the package. A second one here drifts from it the moment a
+# release is prepared -- which is exactly how cytome 0.2.6 shipped a manifest
+# claiming 0.2.5 and failed its own publish workflow.
+path = "cytorete/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["cytorete"]

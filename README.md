@@ -93,12 +93,12 @@ The dependency runs one way — `cytorete → piaso-tools` — and never back.
 cytorete is deliberately *not* a dependency of PIASO, which would be a
 packaging cycle.
 
-| Concern | Lives in |
-|---|---|
-| Regulons, promoter cistrome, regulon activity & specificity, regulon plots | **cytorete** (this package) |
-| Scoring, INFOG normalization, GDR, co-specificity, motif scanning (`pp.scan_motifs`), motif/genome loaders | PIASO (`piaso-tools`) |
-| Streaming on-disk backend | Cytome |
-| Marker specificity scoring | COSG |
+| Concern | Lives in | |
+|---|---|---|
+| Regulons, promoter cistrome, regulon activity & specificity, regulon plots | **cytorete** (this package) | [docs](https://piaso.org/tutorials/cytorete-regulons/) |
+| Scoring, INFOG normalization, GDR, co-specificity, motif scanning (`pp.scan_motifs`), motif/genome loaders | [PIASO](https://github.com/genecell/PIASO) (`piaso-tools`) | [piaso.org](https://piaso.org) · [PyPI](https://pypi.org/project/piaso-tools/) |
+| Streaming on-disk backend | [cytome](https://github.com/genecell/cytome) | [docs](https://piaso.org/tutorials/cytome-basics/) · [PyPI](https://pypi.org/project/cytome/) |
+| Marker specificity scoring | [COSG](https://github.com/genecell/COSG) | [PyPI](https://pypi.org/project/cosg/) · [R](https://github.com/genecell/COSGR) |
 
 The GRN entry points that used to live in `piaso.tl` remain there as thin
 forwarders: each resolves cytorete at call time and, if it is not installed,

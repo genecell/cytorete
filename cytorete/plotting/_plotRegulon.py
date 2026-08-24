@@ -309,7 +309,9 @@ def regulonActivity(
 def regulonNetwork(
     data=None, tf: Optional[str] = None, *, regulons=None, uns_key: str = "regulon",
     max_targets: int = 25, layout: str = "fr", seed: int = 0, figsize=(7, 7),
-    node_size_tf=600, node_size_target=120, save=None, show=True, return_fig=False,
+    node_size_tf=600, node_size_target=120, label_targets: bool = True,
+    target_fontsize: float = 7.0,
+    save=None, show=True, return_fig=False,
 ):
     """TF→target network via igraph layout + matplotlib (no networkx).
 
@@ -367,10 +369,20 @@ def regulonNetwork(
                c="#7D80DA", edgecolor="k", linewidth=0.3, zorder=2, label="target")
     ax.scatter(lay[tf_mask, 0], lay[tf_mask, 1], s=node_size_tf,
                c="#D55E00", edgecolor="k", linewidth=0.5, zorder=3, label="TF")
+    # Target labels are the point of a single-TF network: an unlabelled ring
+    # of dots says only "this TF has some targets", which the target count
+    # already said. Off is available for dense multi-TF layouts.
     for i, n in enumerate(nodes):
         if is_tf[n]:
             ax.text(lay[i, 0], lay[i, 1], n, fontsize=8, fontweight="bold",
                     ha="center", va="center", zorder=4)
+        elif label_targets:
+            ax.text(lay[i, 0], lay[i, 1], n, fontsize=target_fontsize,
+                    ha="center", va="bottom", zorder=4,
+                    color="#333333",
+                    path_effects=[__import__("matplotlib.patheffects",
+                                             fromlist=["withStroke"])
+                                  .withStroke(linewidth=2, foreground="white")])
     ax.set_axis_off()
     ax.set_title("Regulon network" + (f": {tf}" if tf else ""))
     ax.legend(loc="upper right", fontsize=8, markerscale=0.6)

@@ -16,7 +16,7 @@ except ImportError:
 from ._grn import inferRegulon
 from ._activity import regulonActivity, regulonSpecificity
 
-# snake_case aliases (preferred Cytorete surface)
+# snake_case aliases (preferred cytorete surface)
 infer_grn = inferGRN
 infer_grn_consensus = inferGRN_consensus
 infer_tf_activity = inferTFActivity

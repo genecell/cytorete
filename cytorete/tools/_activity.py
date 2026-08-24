@@ -110,7 +110,7 @@ def regulonActivity(
     score_layer : str, default ``'infog'``
         Layer scored (AnnData ``layers[...]``; the INFOG layer is recommended).
     modality, cytome_layer, batch_size
-        Cytome streaming knobs (modality, layer, rows per chunk).
+        cytome streaming knobs (modality, layer, rows per chunk).
     n_nearest_neighbors : int, default 30
         Gene-KNN size for control-set sampling in ``score()``.
     n_ctrl_set : int, default 1000

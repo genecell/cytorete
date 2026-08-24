@@ -297,6 +297,51 @@ def inferRegulon(
     from piaso.tools import cospecificity_trans
     from piaso.tools import specificity_matrix as _specificity_matrix
 
+    data, _opened_here = io.open_if_path(data)
+    try:
+        return _inferRegulon_impl(
+            data, genome, groupby, motif_db=motif_db, jaspar_path=jaspar_path,
+            cisbp_dir=cisbp_dir, cisbp_tf_info=cisbp_tf_info, tf_list=tf_list,
+            tf_list_path=tf_list_path, species=species, twobit_path=twobit_path,
+            tss_bed=tss_bed, data_dir=data_dir, upstream=upstream,
+            downstream=downstream, biotypes=biotypes,
+            regulatory_regions=regulatory_regions, screen_bed=screen_bed,
+            cre_window=cre_window, cistrome_method=cistrome_method,
+            pvalue=pvalue, motif_bg_quantile=motif_bg_quantile,
+            motif_bg_combine_pvalue=motif_bg_combine_pvalue,
+            flat_motif_filter=flat_motif_filter, nes_threshold=nes_threshold,
+            both_strands=both_strands, use_rust=use_rust,
+            target_genes=target_genes,
+            n_markers_per_celltype=n_markers_per_celltype,
+            n_top_genes=n_top_genes, metric=metric, modality=modality,
+            cosg_mu=cosg_mu, cosg_expressed_pct=cosg_expressed_pct,
+            cosg_layer=cosg_layer, min_targets=min_targets,
+            weight_mode=weight_mode, top_targets_per_tf=top_targets_per_tf,
+            per_celltype=per_celltype, compute_activity=compute_activity,
+            score_layer=score_layer, n_ctrl_set=n_ctrl_set,
+            compute_pvalues=compute_pvalues, max_workers=max_workers,
+            specificity=specificity,
+            specificity_use_neglog10p=specificity_use_neglog10p,
+            key_added=key_added, uns_key=uns_key, copy=copy, verbose=verbose)
+    finally:
+        if _opened_here:
+            data.close()
+
+
+def _inferRegulon_impl(
+    data, genome, groupby, *, motif_db, jaspar_path, cisbp_dir, cisbp_tf_info,
+    tf_list, tf_list_path, species, twobit_path, tss_bed, data_dir, upstream,
+    downstream, biotypes, regulatory_regions, screen_bed, cre_window,
+    cistrome_method, pvalue, motif_bg_quantile, motif_bg_combine_pvalue,
+    flat_motif_filter, nes_threshold, both_strands, use_rust, target_genes,
+    n_markers_per_celltype, n_top_genes, metric, modality, cosg_mu,
+    cosg_expressed_pct, cosg_layer, min_targets, weight_mode,
+    top_targets_per_tf, per_celltype, compute_activity, score_layer,
+    n_ctrl_set, compute_pvalues, max_workers, specificity,
+    specificity_use_neglog10p, key_added, uns_key, copy, verbose):
+    from piaso.tools import cospecificity_trans
+    from piaso.tools import specificity_matrix as _specificity_matrix
+
     universe = io.get_var_names(data, modality=modality)
     if verbose:
         print(f"[inferRegulon] genome={genome} groupby={groupby!r} "

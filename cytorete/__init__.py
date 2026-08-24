@@ -1,11 +1,14 @@
-"""Cytorete — cell-type-resolved inference of gene regulatory networks and their dynamics.
+"""cytorete — cell-type-resolved inference of gene regulatory networks.
 
-*Cytorete* (pronounced "sigh-toe-reet"; *cyto-* + Latin *rete*, "cell network")
-is a GRN method built on the PIASO single-cell stack. It reuses PIASO's public
-API (scoring/INFOG, GDR via ``piaso.tl.runGDR``, co-specificity, peak selection,
-``piaso.pp.scan_motifs``, genome loaders), the Cytome streaming backend, and
-COSG — a one-directional dependency (``cytorete → piaso-tools``), so there is no
-packaging cycle.
+*cyto-* + *rete*, "the cell's network": Ancient Greek **κύτος** (*kýtos*), the
+combining form for cell, and Latin **rēte**, "net". Pronounced
+**sy-toh-REE-tee** (/ˌsaɪtoʊˈriːtiː/) -- *rete* as in *rete mirabile*.
+
+A GRN method built on the PIASO single-cell stack: it reuses PIASO's public API
+(scoring/INFOG, GDR via ``piaso.tl.runGDR``, co-specificity,
+``piaso.pp.scan_motifs``, genome loaders), the cytome streaming backend, and
+COSG -- a one-directional dependency (``cytorete -> piaso-tools``), so there is
+no packaging cycle.
 
 Namespaces mirror PIASO for muscle-memory (``cytorete.tl is cytorete.tools``):
 
@@ -19,7 +22,7 @@ and legacy ``camelCase``).
 """
 from __future__ import annotations
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 from . import tools as tl
 from . import preprocessing as pp
